@@ -18,7 +18,7 @@ COPY . .
 RUN mkdir -p /app/data && chmod 777 /app/data
 
 # Expose port
-EXPOSE 80
+EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
