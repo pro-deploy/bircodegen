@@ -1,0 +1,507 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap">
+    <style>
+        :root {
+            /* Light Theme */
+            --bg-primary-light: #ffffff;
+            --bg-secondary-light: #f5f5f7;
+            --text-primary-light: #1d1d1f;
+            --text-secondary-light: #86868b;
+            --border-light: #d2d2d7;
+            --accent-light: #0071e3;
+            --card-shadow-light: 0 2px 12px rgba(0, 0, 0, 0.08);
+            
+            /* Dark Theme */
+            --bg-primary-dark: #1d1d1f;
+            --bg-secondary-dark: #141414;
+            --text-primary-dark: #f5f5f7;
+            --text-secondary-dark: #86868b;
+            --border-dark: #424245;
+            --accent-dark: #2997ff;
+            --card-shadow-dark: 0 2px 12px rgba(0, 0, 0, 0.2);
+            
+            /* Default theme (light) */
+            --bg-primary: var(--bg-primary-light);
+            --bg-secondary: var(--bg-secondary-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --border-color: var(--border-light);
+            --accent-color: var(--accent-light);
+            --card-shadow: var(--card-shadow-light);
+        }
+
+        .dark-theme {
+            --bg-primary: var(--bg-primary-dark);
+            --bg-secondary: var(--bg-secondary-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --border-color: var(--border-dark);
+            --accent-color: var(--accent-dark);
+            --card-shadow: var(--card-shadow-dark);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-secondary);
+            transform: translateY(-1px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            gap: 40px;
+        }
+
+        .forms-container {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .results-container {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .form-group {
+            background: var(--bg-primary);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .form-group:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow), 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(41, 151, 255, 0.1);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--bg-primary);
+            border-top: 2px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .project-card {
+            background: var(--bg-primary);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow), 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-id {
+            font-family: "SF Mono", SFMono-Regular, ui-monospace, monospace;
+            font-size: 12px;
+            background: var(--bg-secondary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+
+        .copy-button {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+
+        .error-message {
+            color: #ff3b30;
+            margin-top: 8px;
+            font-size: 14px;
+            display: none;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255, 59, 48, 0.1);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-color);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            .form-group {
+                padding: 16px;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+    
+    <div class="container">
+        <div class="forms-container">
+            <div class="form-group">
+                <h2>Generate New Project</h2>
+                <form id="generateForm" onsubmit="handleGenerateSubmit(event)">
+                    <div class="input-group">
+                        <label for="projectName">Project Name</label>
+                        <input type="text" id="projectName" name="projectName" placeholder="Enter project name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="description">Project Description</label>
+                        <textarea id="description" name="description" placeholder="Describe your project" required></textarea>
+                    </div>
+                    <div class="error-message" id="generateError"></div>
+                    <div class="button-container">
+                        <button type="submit">
+                            Generate
+                            <div class="loader"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-group">
+                <h2>Update Existing Project</h2>
+                <form id="updateForm" onsubmit="handleUpdateSubmit(event)">
+                    <div class="input-group">
+                        <label for="project_id">Project ID</label>
+                        <input type="text" id="project_id" name="project_id" placeholder="Enter project ID" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="new_feature">New Feature Description</label>
+                        <textarea id="new_feature" name="new_feature" placeholder="Describe the new feature" required></textarea>
+                    </div>
+                    <div class="error-message" id="updateError"></div>
+                    <div class="button-container">
+                        <button type="submit">
+                            Update
+                            <div class="loader"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="results-container">
+            <h2>Generated Projects</h2>
+            <div id="projectsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Theme handling
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+
+        // Check saved theme
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark-theme');
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        async function handleGenerateSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const loader = form.querySelector('.loader');
+            const button = form.querySelector('button');
+            const errorDiv = document.getElementById('generateError');
+
+            const data = {
+                projectName: form.projectName.value,
+                description: form.description.value
+            };
+
+            try {
+                loader.style.display = 'block';
+                button.disabled = true;
+                errorDiv.style.display = 'none';
+
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to generate project');
+                }
+
+                const projectId = response.headers.get('X-Project-Id');
+                const blob = await response.blob();
+
+                createProjectCard(projectId, data.projectName, data.description, blob);
+                form.reset();
+                showNotification('Project generated successfully!');
+
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loader.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        async function handleUpdateSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const loader = form.querySelector('.loader');
+            const button = form.querySelector('button');
+            const errorDiv = document.getElementById('updateError');
+
+            const data = {
+                project_id: form.project_id.value,
+                new_feature: form.new_feature.value
+            };
+
+            try {
+                loader.style.display = 'block';
+                button.disabled = true;
+                errorDiv.style.display = 'none';
+
+                const response = await fetch('/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update project');
+                }
+
+                const blob = await response.blob();
+                createProjectCard(data.project_id, 'Updated Project', data.new_feature, blob);
+                form.reset();
+                showNotification('Project updated successfully!');
+
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loader.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        function createProjectCard(projectId, name, description, blob = null) {
+            const projectCard = document.createElement('div');
+            projectCard.className = 'project-card';
+            
+            const blobUrl = blob ? URL.createObjectURL(blob) : null;
+            const downloadButton = blobUrl ? 
+                `<button onclick="downloadProject('${blobUrl}')" class="download-button">Download Project</button>` : '';
+            
+            projectCard.innerHTML = `
+                <h3>${name || 'Unnamed Project'}</h3>
+                <p>
+                    <strong>ID:</strong> 
+                    <span class="project-id">${projectId}</span>
+                    <button class="copy-button" onclick="copyToClipboard('${projectId}')">Copy ID</button>
+                </p>
+                <p><strong>Description:</strong> ${description.slice(0, 100)}...</p>
+                ${downloadButton}
+            `;
+            
+            document.getElementById('projectsList').insertBefore(projectCard, document.getElementById('projectsList').firstChild);
+        }
+
+        function downloadProject(blobUrl) {
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = "project.zip";
+            a.click();
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => showNotification('Project ID copied to clipboard!'))
+                .catch(err => console.error('Failed to copy:', err));
+        }
+
+        // Load existing projects
+        fetch('/projects')
+            .then(response => response.json())
+            .then(projects => {
+                projects.forEach(project => {
+                    createProjectCard(project.id, project.name, project.description);
+                });
+            })
+            .catch(error => console.error('Error loading projects:', error));
+    </script>
+</body>
+</html>
