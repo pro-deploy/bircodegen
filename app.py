@@ -147,18 +147,15 @@ def parse_files_from_response(response_text, project_type, project_name="", proj
         current_file = None
         current_content = []
         
-        # Improved parsing logic
         lines = response_text.split('\n')
         for line in lines:
-            # Improved file detection
-            if line.startswith('```') and '.' in line:
+            if line.startswith('```') and len(line) > 3:
                 if current_file:
                     files[current_file] = '\n'.join(current_content).strip()
                     current_content = []
                 current_file = line.replace('```', '').strip()
-            elif line == '```':
-                if current_file:
-                    files[current_file] = '\n'.join(current_content).strip()
+            elif line.startswith('```') and current_file:
+                files[current_file] = '\n'.join(current_content).strip()
                 current_file = None
                 current_content = []
             elif current_file:
@@ -257,16 +254,25 @@ data/'''
         # Remove any empty files
         files = {k: v for k, v in files.items() if v.strip()}
         
+        # Ensure all files have extensions
+        for filename in list(files.keys()):
+            if '.' not in filename:
+                if 'main' in filename:
+                    files[filename + '.py'] = files.pop(filename)
+                elif 'requirements' in filename:
+                    files[filename + '.txt'] = files.pop(filename)
+                elif 'docker-compose' in filename:
+                    files[filename + '.yml'] = files.pop(filename)
+                elif 'Dockerfile' in filename:
+                    continue  # Dockerfile doesn't need an extension
+                else:
+                    files[filename + '.txt'] = files.pop(filename)  # Default to .txt for unknown files
+
         return files
     except Exception as e:
         print(f"Error parsing files from response: {e}")
         traceback.print_exc()
         return {"main.py": response_text}
-
-# Rest of the code remains the same as in the previous implementation
-
-# Add this at the top of the file
-
 
 def get_db():
     try:
@@ -429,104 +435,6 @@ def query_model(messages, project_type):
         traceback.print_exc()
         raise
 
-def parse_files_from_response(response_text, project_type, project_name="", project_description=""):
-    """Parse files from model response and ensure all required files are present"""
-    try:
-        files = {}
-        current_file = None
-        current_content = []
-        
-        lines = response_text.split('\n')
-        for line in lines:
-            if line.startswith('```') and len(line) > 3:
-                if current_file:
-                    files[current_file] = '\n'.join(current_content)
-                    current_content = []
-                current_file = line.replace('```', '').strip()
-            elif line.startswith('```') and current_file:
-                files[current_file] = '\n'.join(current_content)
-                current_file = None
-                current_content = []
-            elif current_file:
-                current_content.append(line)
-
-        # Get project requirements
-        requirements = get_project_requirements(project_type)
-        
-        # Ensure all required files exist
-        if 'requirements.txt' not in files:
-            files['requirements.txt'] = '\n'.join(requirements['dependencies'])
-        
-        if '.env.example' not in files:
-            files['.env.example'] = '\n'.join(requirements['env_vars'])
-        
-        if 'docker-compose.yml' not in files:
-            services = requirements['services']
-            docker_compose = {
-                'version': '3.8',
-                'services': {
-                    'app': {
-                        'build': '.',
-                        'restart': 'unless-stopped',
-                        'env_file': ['.env'],
-                        'volumes': ['./data:/app/data'],
-                    },
-                    **services
-                }
-            }
-            if services:
-                docker_compose['volumes'] = {'postgres_data': {}} if 'db' in services else {}
-            files['docker-compose.yml'] = json.dumps(docker_compose, indent=2)
-        
-        if 'Dockerfile' not in files:
-            files['Dockerfile'] = '''FROM python:3.9-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["python", "main.py"]'''
-        
-        if 'README.md' not in files:
-            files['README.md'] = f'''# {project_name}
-
-## Description
-{project_description}
-
-## Requirements
-- Docker
-- Docker Compose
-
-## Setup
-1. Clone the repository
-2. Copy .env.example to .env and adjust variables
-3. Run `docker-compose up --build`
-
-## Project Structure
-[Generated project structure description]
-
-## Development
-[Development instructions]
-
-## Production
-[Production deployment instructions]'''
-        
-        if '.gitignore' not in files:
-            files['.gitignore'] = '''# Python
-__pycache__/
-*.py[cod]
-venv/
-.env
-.idea/
-.vscode/
-*.log
-data/'''
-        
-        return files
-    except Exception as e:
-        print(f"Error parsing files from response: {e}")
-        traceback.print_exc()
-        return {"main.py": response_text}
-
 def create_zip(files):
     try:
         temp_dir = tempfile.mkdtemp()
@@ -650,9 +558,9 @@ def update_code():
         try:
             zip_path = create_zip(updated_files)
             response = make_response(send_file(zip_path, 
-                                             as_attachment=True, 
-                                             download_name='project.zip',
-                                             mimetype='application/zip'))
+                                               as_attachment=True, 
+                                               download_name='project.zip',
+                                               mimetype='application/zip'))
             response.headers['X-Project-Id'] = project_id
             return response
         except Exception as e:
@@ -700,4 +608,3 @@ def internal_error(error):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-

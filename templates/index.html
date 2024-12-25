@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -262,6 +261,20 @@
             animation: slideUp 0.3s ease;
         }
 
+        .response-preview {
+            background: var(--bg-primary);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: "SF Mono", SFMono-Regular, ui-monospace, monospace;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -342,6 +355,7 @@
 
         <div class="results-container">
             <h2>Generated Projects</h2>
+            <div id="responsePreview" class="response-preview"></div>
             <div id="projectsList"></div>
         </div>
     </div>
@@ -400,6 +414,9 @@
 
                 const projectId = response.headers.get('X-Project-Id');
                 const blob = await response.blob();
+                const textResponse = await blob.text();
+
+                document.getElementById('responsePreview').textContent = textResponse;
 
                 createProjectCard(projectId, data.projectName, data.description, blob);
                 form.reset();
@@ -445,6 +462,10 @@
                 }
 
                 const blob = await response.blob();
+                const textResponse = await blob.text();
+
+                document.getElementById('responsePreview').textContent = textResponse;
+
                 createProjectCard(data.project_id, 'Updated Project', data.new_feature, blob);
                 form.reset();
                 showNotification('Project updated successfully!');
